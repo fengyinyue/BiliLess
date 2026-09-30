@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>BiliLess</title><link rel="stylesheet" href="popup.css" /></head>
+  <body><main>
+    <header class="heading"><img class="brand-icon" src="../icons/icon-32.png" alt="" /><div class="brand-copy"><h1>BiliLess</h1><p>让页面少一点打扰</p></div><label class="switch"><input id="enabled" data-setting="enabled" type="checkbox" /><span class="slider"></span></label></header>
+    <section class="preset-picker">
+      <div class="preset-row"><span>我的预设</span><select id="preset"><option value="">选择已保存预设</option></select></div>
+      <div class="preset-actions"><input id="preset-name" type="text" maxlength="24" placeholder="输入预设名称" /><button id="save-preset" type="button">保存当前</button><button id="delete-preset" type="button" disabled>删除</button></div>
+      <small id="preset-state"></small>
+    </section>
+    <details class="content-types"><summary><span>按内容类型筛选</span><small id="content-type-count"></small></summary>
+      <div class="type-tools"><button id="select-all-types" type="button">全选</button><button id="clear-types" type="button">清空</button></div>
+      <div id="content-type-list" class="content-type-list"></div>
+    </details>
+    <details><summary><span>按分区屏蔽</span> <small id="section-count"></small></summary>
+      <div class="section-tools"><input id="section-search" type="search" placeholder="搜索分区" /><button id="select-all-sections" type="button">全选</button><button id="clear-sections" type="button">清空</button></div>
+      <div id="sections" class="section-tree"></div><p id="section-warning" class="section-warning"></p>
+    </details>
+    <details><summary>按 UP 主屏蔽 <small id="uploader-count"></small></summary><label class="field"><span>每行填写一个昵称或 UID</span><textarea id="uploaders" rows="5" placeholder="例如：&#10;某个UP主&#10;123456"></textarea></label></details>
+    <details id="ai-panel"><summary>AI 语义筛选 <small id="ai-state"></small></summary>
+      <div class="ai-settings">
+        <label class="filter compact"><span><strong>启用 AI 筛选</strong><small>视频文字将发送至所选 AI 服务</small></span><input data-setting="aiEnabled" type="checkbox" /></label>
+        <label class="field"><span>不想看的内容</span><textarea id="ai-preference" rows="3" placeholder="例如：财经、股票、债务、投资理财"></textarea></label>
+        <label class="field"><span>AI 服务</span><select id="ai-provider"><option value="minimax">MiniMax</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="gemini">Google Gemini</option><option value="qwen">通义千问</option><option value="custom">自定义兼容接口</option></select></label>
+        <label class="field"><span>API Key（仅保存在本机）</span><input id="ai-api-key" type="password" placeholder="填写 API Key" autocomplete="off" /></label>
+        <label class="field"><span>接口地址</span><input id="ai-endpoint" type="url" placeholder="https://…/chat/completions" /></label>
+        <label class="field"><span>模型</span><input id="ai-model" type="text" /></label>
+        <label class="field"><span>屏蔽置信度：<output id="threshold-value">80%</output></span><input id="ai-threshold" type="range" min="0.5" max="0.95" step="0.05" /></label>
+        <div class="token-usage">
+          <div><span>累计 Token</span><strong id="token-total">0</strong></div>
+          <div><span>输入</span><b id="token-input">0</b></div>
+          <div><span>输出</span><b id="token-output">0</b></div>
+          <div><span>请求</span><b id="token-requests">0</b></div>
+          <button id="reset-token-usage" type="button">清零统计</button>
+        </div>
+        <p id="ai-save-state" class="save-state"></p>
+      </div>
+    </details>
+    <div class="status"><span id="status-text">正在读取状态…</span><strong id="count">0</strong></div>
+    <p class="hint">设置自动保存；AI 功能可能产生所选服务的 API 用量。</p>
+  </main><script src="../shared/sections.js"></script><script src="popup.js"></script></body>
+</html>

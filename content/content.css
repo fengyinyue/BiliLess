@@ -1,0 +1,90 @@
+/* Card filtering is handled by content.js. Kept as a dedicated stylesheet for future visual rules. */
+.bililess-action-host {
+  position: relative !important;
+}
+
+.bililess-card-controls {
+  position: absolute;
+  z-index: 100;
+  top: 8px;
+  right: 8px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.bililess-card-trigger {
+  min-width: 42px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 9px;
+  color: #fff;
+  background: #fb7299;
+  box-shadow: 0 2px 8px #0004;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity .15s, transform .15s, background .15s;
+}
+
+.bililess-action-host:hover > .bililess-card-controls > .bililess-card-trigger,
+.bililess-menu-open > .bililess-card-trigger {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bililess-card-trigger:hover {
+  background: #e95782;
+}
+
+.bililess-filter-menu {
+  display: none;
+  position: absolute;
+  top: 32px;
+  right: 0;
+  width: 218px;
+  overflow: hidden;
+  border: 1px solid #f3c4d2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 26px #0003;
+}
+
+.bililess-menu-open > .bililess-filter-menu {
+  display: block;
+}
+
+.bililess-filter-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #f2f2f2;
+  padding: 10px 12px;
+  color: #18191c;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.bililess-filter-menu button:last-child {
+  border-bottom: 0;
+}
+
+.bililess-filter-menu button:hover:not(:disabled) {
+  color: #e95782;
+  background: #fff0f5;
+}
+
+.bililess-filter-menu button:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
+.bililess-menu-status {
+  padding: 12px;
+  color: #777;
+  font-size: 12px;
+}
