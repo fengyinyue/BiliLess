@@ -28,6 +28,7 @@
     guochuang: { badge: /^(国创|国产动画)$/ },
     movie: { badge: /^(电影|电影相关)$/ },
     tv: { badge: /^(电视剧|TV剧|电视剧相关)$/ },
+    variety: { badge: /^(综艺|综艺节目|综艺相关)$/ },
     documentary: { badge: /^(纪录片|纪录片相关)$/ },
     manga: { badge: /^(漫画|哔哩哔哩漫画)$/, href: /(?:\/\/manga\.bilibili\.com\/|\/manga\/detail\/)/i, selector: ".manga-card" },
     course: { badge: /^(课堂|课程|付费课程)$/, href: /\/cheese\/play\//i }
@@ -80,7 +81,7 @@
     const types = [];
     if (settings.blockAds) types.push("ads");
     if (settings.blockLive) types.push("live");
-    if (settings.blockMedia) types.push("bangumi", "guochuang", "movie", "tv", "documentary");
+    if (settings.blockMedia) types.push("bangumi", "guochuang", "movie", "tv", "variety", "documentary");
     if (settings.blockManga) types.push("manga");
     return new Set(types);
   }

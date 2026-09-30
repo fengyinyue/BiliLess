@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BiliLess",
-  "version": "0.10.4",
+  "version": "0.10.7",
   "description": "按内容类型、分区、UP 主和 AI 判断筛选哔哩哔哩视频卡片。",
   "icons": {
     "16": "icons/icon-16.png",

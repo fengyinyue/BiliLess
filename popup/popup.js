@@ -14,6 +14,7 @@ const CONTENT_TYPES = [
   ["guochuang", "国创", "国产动画与国创内容"],
   ["movie", "电影", "电影内容卡片"],
   ["tv", "电视剧", "电视剧内容卡片"],
+  ["variety", "综艺", "综艺节目及相关内容卡片"],
   ["documentary", "纪录片", "纪录片内容卡片"],
   ["manga", "漫画", "哔哩哔哩漫画相关卡片"],
   ["course", "课程", "课堂、付费课程与课程推广"]
@@ -40,6 +41,7 @@ const aiApiKeyElement = document.querySelector("#ai-api-key");
 const aiEndpointElement = document.querySelector("#ai-endpoint");
 const aiModelElement = document.querySelector("#ai-model");
 let saveTimer;
+let configWriteQueue = Promise.resolve();
 const EMPTY_USAGE = { input: 0, output: 0, total: 0, requests: 0 };
 const LEGACY_GROUP_IDS = {
   "动画": [1005], "番剧": [1005], "音乐": [1003], "舞蹈": [1004], "游戏": [1008],
@@ -65,7 +67,7 @@ function migrateContentTypes(settings) {
   const selectedContentTypes = [];
   if (settings.blockAds) selectedContentTypes.push("ads");
   if (settings.blockLive) selectedContentTypes.push("live");
-  if (settings.blockMedia) selectedContentTypes.push("bangumi", "guochuang", "movie", "tv", "documentary");
+  if (settings.blockMedia) selectedContentTypes.push("bangumi", "guochuang", "movie", "tv", "variety", "documentary");
   if (settings.blockManga) selectedContentTypes.push("manga");
   return { ...settings, selectedContentTypes, contentTypesConfigured: true };
 }
@@ -145,18 +147,44 @@ function renderTokenUsage(usage = EMPTY_USAGE) {
 
 async function currentSettings() { return chrome.storage.sync.get(DEFAULT_SETTINGS); }
 
+async function writeConfigChange(update) {
+  const settings = await currentSettings();
+  if (!settings.activePreset) {
+    await chrome.storage.sync.set(update);
+    return;
+  }
+  const presetExists = settings.savedPresets.some((preset) => preset.id === settings.activePreset);
+  if (!presetExists) {
+    await chrome.storage.sync.set({ ...update, activePreset: "" });
+    return;
+  }
+  const savedPresets = settings.savedPresets.map((preset) =>
+    preset.id === settings.activePreset
+      ? { ...preset, config: { ...preset.config, ...update } }
+      : preset
+  );
+  await chrome.storage.sync.set({ ...update, savedPresets, activePreset: settings.activePreset });
+}
+
+function persistConfigChange(update) {
+  configWriteQueue = configWriteQueue
+    .catch(() => {})
+    .then(() => writeConfigChange(update));
+  return configWriteQueue;
+}
+
 document.addEventListener("change", async (event) => {
   const input = event.target;
   if (input.id === "preset") return;
   if (input.dataset.setting) {
     const update = { [input.dataset.setting]: input.checked };
-    if (input.dataset.setting !== "enabled") update.activePreset = "";
-    await chrome.storage.sync.set(update);
+    if (input.dataset.setting === "enabled") await chrome.storage.sync.set(update);
+    else await persistConfigChange(update);
   }
   if (input.dataset.contentType) {
     const selectedContentTypes = [...document.querySelectorAll("[data-content-type]:checked")]
       .map((item) => item.dataset.contentType);
-    await chrome.storage.sync.set({ selectedContentTypes, contentTypesConfigured: true, activePreset: "" });
+    await persistConfigChange({ selectedContentTypes, contentTypesConfigured: true });
   }
   if (input.dataset.sectionGroup) {
     const group = input.closest(".section-group");
@@ -174,7 +202,7 @@ document.addEventListener("change", async (event) => {
       if (all) selectedSectionIds.push(group.id);
       else selectedSectionIds.push(...children.filter((child) => child.checked).map((child) => Number(child.dataset.sectionId)));
     }
-    await chrome.storage.sync.set({ selectedSectionIds, activePreset: "" });
+    await persistConfigChange({ selectedSectionIds });
   }
   render(await currentSettings(), Number(countElement.textContent) || 0);
 });
@@ -198,16 +226,18 @@ document.querySelector("#section-search").addEventListener("input", (event) => {
   }
 });
 
-function setAllSections(checked) {
+async function setAllSections(checked) {
   for (const input of document.querySelectorAll("[data-section-group], [data-section-id]")) input.checked = checked;
-  document.querySelector("[data-section-group]").dispatchEvent(new Event("change", { bubbles: true }));
+  const selectedSectionIds = checked ? SECTION_GROUPS.map((group) => group.id) : [];
+  await persistConfigChange({ selectedSectionIds });
+  render(await currentSettings(), Number(countElement.textContent) || 0);
 }
-document.querySelector("#select-all-sections").addEventListener("click", () => setAllSections(true));
-document.querySelector("#clear-sections").addEventListener("click", () => setAllSections(false));
+document.querySelector("#select-all-sections").addEventListener("click", async () => setAllSections(true));
+document.querySelector("#clear-sections").addEventListener("click", async () => setAllSections(false));
 async function setAllContentTypes(checked) {
   for (const input of document.querySelectorAll("[data-content-type]")) input.checked = checked;
   const selectedContentTypes = checked ? CONTENT_TYPES.map(([id]) => id) : [];
-  await chrome.storage.sync.set({ selectedContentTypes, contentTypesConfigured: true, activePreset: "" });
+  await persistConfigChange({ selectedContentTypes, contentTypesConfigured: true });
   render(await currentSettings(), Number(countElement.textContent) || 0);
 }
 document.querySelector("#select-all-types").addEventListener("click", () => setAllContentTypes(true));
@@ -249,7 +279,7 @@ uploadersElement.addEventListener("input", () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     const blockedUploaders = [...new Set(uploadersElement.value.split(/[\n,，]+/).map((item) => item.trim()).filter(Boolean))];
-    await chrome.storage.sync.set({ blockedUploaders, activePreset: "" });
+    await persistConfigChange({ blockedUploaders });
     render(await currentSettings(), Number(countElement.textContent) || 0);
   }, 400);
 });
@@ -257,7 +287,7 @@ uploadersElement.addEventListener("input", () => {
 aiPreferenceElement.addEventListener("input", () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    await chrome.storage.sync.set({ aiPreference: aiPreferenceElement.value.trim(), activePreset: "" });
+    await persistConfigChange({ aiPreference: aiPreferenceElement.value.trim() });
     render(await currentSettings(), Number(countElement.textContent) || 0);
   }, 400);
 });
@@ -266,7 +296,7 @@ thresholdElement.addEventListener("input", () => {
   thresholdValue.textContent = `${Math.round(Number(thresholdElement.value) * 100)}%`;
 });
 thresholdElement.addEventListener("change", async () => {
-  await chrome.storage.sync.set({ aiThreshold: Number(thresholdElement.value), activePreset: "" });
+  await persistConfigChange({ aiThreshold: Number(thresholdElement.value) });
 });
 
 async function getProviderStorage() {
